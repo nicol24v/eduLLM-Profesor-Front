@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useSearchParams } from 'react-router-dom';
+import { Container, Box, Typography } from '@mui/material';
 import AppRoutes from './routes/AppRoutes';
 import Layout from './components/common/Layout';
 import LoadingScreen from './components/common/LoadingScreen';
@@ -12,12 +13,20 @@ const SKIP_VERIFY = import.meta.env.VITE_SKIP_AUTH_VERIFY === 'true';
 
 function AuthGate() {
   const { verifyAuth, isAuthenticated, user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('Verificando sesión...');
   const [noSession, setNoSession] = useState(false);
   const called = useRef(false);
 
+  const isLoggingOut = searchParams.get('logout') === '1';
+
   useEffect(() => {
+    if (isLoggingOut) {
+      setNoSession(true);
+      setLoading(false);
+      return;
+    }
     if (called.current) return;
     called.current = true;
 
@@ -33,16 +42,17 @@ function AuthGate() {
       })
       .catch(() => setNoSession(true))
       .finally(() => setLoading(false));
-  }, [verifyAuth]);
+  }, [verifyAuth, isLoggingOut]);
 
   const isProfesor = SKIP_VERIFY || user?.rol === 'ROLE_PROFESOR' || user?.rol === 'profesor';
   const wrongRole = !loading && !noSession && isAuthenticated && !isProfesor;
 
   useEffect(() => {
-    if (!loading && (noSession || (!SKIP_VERIFY && !isAuthenticated))) {
-      redirectToLogin();
+    if (noSession) {
+      const t = setTimeout(redirectToLogin, 2000);
+      return () => clearTimeout(t);
     }
-  }, [loading, noSession, isAuthenticated]);
+  }, [noSession]);
 
   useEffect(() => {
     if (wrongRole) {
@@ -53,8 +63,15 @@ function AuthGate() {
 
   if (loading) return <LoadingScreen message={message} delay={300} />;
 
-  if (noSession || (!SKIP_VERIFY && !isAuthenticated)) {
-    return <LoadingScreen message="Redirigiendo al inicio de sesión..." />;
+  if (noSession) {
+    return (
+      <Container maxWidth="sm" sx={{ mt: 8, textAlign: 'center' }}>
+        <Box sx={{ py: 8 }}>
+          <Typography variant="h5" gutterBottom>No hay sesión activa</Typography>
+          <Typography color="text.secondary">Redirigiendo al inicio de sesión...</Typography>
+        </Box>
+      </Container>
+    );
   }
 
   if (wrongRole) {

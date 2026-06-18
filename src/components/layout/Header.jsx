@@ -6,6 +6,7 @@ import {
 import LogoutIcon from '@mui/icons-material/Logout';
 import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
+import { getLoginUrl } from '../../utils/auth';
 
 const GATEWAY = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:8085';
 
@@ -13,13 +14,12 @@ const Header = () => {
   const { logout: clearSession, user } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     localStorage.removeItem('jwtToken');
     clearSession();
-    try {
-      await axios.post(`${GATEWAY}/api/auth/logout`, null, { withCredentials: true });
-    } catch (_) {}
-    window.location.href = '/login';
+    setAnchorEl(null);
+    axios.post(`${GATEWAY}/api/auth/logout`, null, { withCredentials: true }).catch(() => {});
+    window.location.href = '/?logout=1';
   };
 
   const initials = user?.username ? user.username.slice(0, 2).toUpperCase() : 'PR';

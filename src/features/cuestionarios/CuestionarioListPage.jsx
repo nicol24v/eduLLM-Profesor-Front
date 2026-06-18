@@ -53,6 +53,7 @@ function CuestionarioListPage() {
         titulo: selectedCuestionario?.titulo || '',
         totalPreguntas: selectedCuestionario?._count?.tbl_t_pregunta
           ?? selectedCuestionario?.tbl_t_pregunta?.length
+          ?? selectedCuestionario?.total_preguntas
           ?? 0,
       });
       navigate(`/sala-espera/${codigo_acceso}`);
@@ -113,7 +114,7 @@ function CuestionarioListPage() {
             <RadioGroup value={selectedId?.toString() || ''} onChange={(e) => setSelectedId(Number(e.target.value))}>
               <div className="divide-y divide-slate-100">
                 {cuestionarios.map((q) => {
-                  const nPreguntas = q.tbl_t_pregunta?.length ?? q._count?.tbl_t_pregunta ?? 0;
+                  const nPreguntas = q.tbl_t_pregunta?.length ?? q._count?.tbl_t_pregunta ?? q.total_preguntas ?? 0;
                   const isSelected = selectedId === q.id_prueba;
                   return (
                     <div
