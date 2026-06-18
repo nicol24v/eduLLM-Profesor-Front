@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Card, CardContent, Button, TextField, IconButton,
@@ -191,6 +191,23 @@ function CuestionarioEditorPage() {
   const [preguntas, setPreguntas] = useState([newPregunta()]);
   const [saving, setSaving] = useState(false);
 
+  const materiasList = useMemo(() => {
+    if (!existing?.tbl_t_profesor_materia) return materias;
+    const alreadyThere = materias.some(
+      (m) => m.id_profesor_materia === existing.tbl_t_profesor_materia.id_profesor_materia,
+    );
+    if (alreadyThere) return materias;
+    return [
+      {
+        id_profesor_materia: existing.tbl_t_profesor_materia.id_profesor_materia,
+        materia: existing.tbl_t_profesor_materia.tbl_m_materia,
+        periodo: existing.tbl_t_profesor_materia.tbl_m_periodo_lectivo?.nombre,
+        es_activo: existing.tbl_t_profesor_materia.tbl_m_periodo_lectivo?.es_activo,
+      },
+      ...materias,
+    ];
+  }, [materias, existing]);
+
   useEffect(() => {
     if (existing) {
       setTitulo(existing.titulo || '');
@@ -199,6 +216,7 @@ function CuestionarioEditorPage() {
       if (existing.tbl_t_pregunta?.length) {
         setPreguntas(
           existing.tbl_t_pregunta.map((p) => ({
+            id_pregunta: p.id_pregunta,
             texto: p.texto || '',
             tipo: p.tipo || 'single_choice',
             cooldown: p.cooldown ?? 5,
@@ -207,6 +225,7 @@ function CuestionarioEditorPage() {
             video_url: p.video_url || '',
             audio_url: p.audio_url || '',
             opciones: (p.tbl_t_opcion || []).map((o) => ({
+              id_opcion: o.id_opcion,
               texto: o.texto || '',
               es_correcta: o.es_correcta || false,
               orden: o.orden ?? null,
@@ -250,6 +269,7 @@ function CuestionarioEditorPage() {
       descripcion: descripcion.trim() || undefined,
       profesor_materia_id: Number(profesorMateriaId),
       preguntas: preguntas.map((p) => ({
+        ...(p.id_pregunta ? { id_pregunta: p.id_pregunta } : {}),
         texto: p.texto.trim(),
         tipo: p.tipo,
         cooldown: p.cooldown,
@@ -258,6 +278,7 @@ function CuestionarioEditorPage() {
         video_url: p.video_url.trim() || undefined,
         audio_url: p.audio_url.trim() || undefined,
         opciones: p.opciones.map((o, oi) => ({
+          ...(o.id_opcion ? { id_opcion: o.id_opcion } : {}),
           texto: o.texto.trim(),
           orden: oi + 1,
           es_correcta: o.es_correcta,
@@ -352,7 +373,7 @@ function CuestionarioEditorPage() {
                 SelectProps={{ native: true }}
               >
                 <option value="">-- Selecciona una materia --</option>
-                {materias.map((m) => (
+                {materiasList.map((m) => (
                   <option key={m.id_profesor_materia} value={m.id_profesor_materia}>
                     {m.materia?.nombre || `Materia ${m.id_profesor_materia}`}
                   </option>

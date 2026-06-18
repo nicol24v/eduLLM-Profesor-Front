@@ -1,6 +1,6 @@
 import React from 'react';
 import { List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
-import { Dashboard, Quiz, History, School } from '@mui/icons-material';
+import { Dashboard, Quiz, History, School, AutoStories } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const menuItems = [
@@ -8,6 +8,7 @@ const menuItems = [
   { text: 'Crear cuestionario',            icon: <Quiz />,      path: '/cuestionarios' },
   { text: 'Historial de cuestionarios',   icon: <History />,   path: '/historial' },
   { text: 'Cursos',                        icon: <School />,    path: '/cursos' },
+  { text: 'Cuestionario IA',               icon: <AutoStories />, path: 'http://localhost:8085/quiz', external: true },
 ];
 
 const Sidebar = () => {
@@ -25,7 +26,7 @@ const Sidebar = () => {
           return (
             <ListItemButton
               key={item.text}
-              onClick={() => navigate(item.path)}
+              onClick={() => item.external ? window.location.href = item.path : navigate(item.path)}
               sx={{
                 mx: 1, my: 0.25, borderRadius: '8px',
                 color: active ? '#fff' : 'rgb(148 163 184)',
