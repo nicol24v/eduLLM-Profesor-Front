@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Card, CardContent, Typography, Button, IconButton,
   Skeleton, Tooltip, Radio, RadioGroup, FormControlLabel,
+  TablePagination,
 } from '@mui/material';
 import { Add, Edit, Delete, PlayArrow } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
@@ -14,16 +15,20 @@ import useGameStore from '../../stores/gameStore';
 function CuestionarioListPage() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const { list, remove } = useCuestionarios();
   const createPartida = useCreatePartida();
   const initGame = useGameStore((s) => s.initGame);
 
+  const [page, setPage] = useState(0);
+  const [limit, setLimit] = useState(10);
   const [selectedId, setSelectedId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [starting, setStarting] = useState(false);
 
+  const { list, remove } = useCuestionarios({ page: page + 1, limit });
+
   const cuestionarios = list.data?.data || [];
-  const total = list.data?.meta?.total ?? cuestionarios.length;
+  const meta = list.data?.meta;
+  const total = meta?.total ?? cuestionarios.length;
 
   const handleDelete = async () => {
     try {
@@ -162,6 +167,23 @@ function CuestionarioListPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {meta && meta.total_pages > 1 && (
+        <TablePagination
+          component="div"
+          count={meta.total}
+          page={page}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          rowsPerPage={limit}
+          onRowsPerPageChange={(e) => {
+            setLimit(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+          rowsPerPageOptions={[5, 10, 25, 50, 100]}
+          labelRowsPerPage="Por página:"
+        />
+      )}
 
       {/* Start button */}
       <div className="flex justify-center">

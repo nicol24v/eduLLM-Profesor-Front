@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { sanitizeData } from '../utils/sanitize';
 import { redirectToLogin } from '../utils/auth';
-import useAuthStore from '../stores/authStore';
 
 const GATEWAY = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:8085';
 
@@ -14,13 +13,6 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem('jwtToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  const idUsuario = useAuthStore.getState().user?.idUsuario;
-  if (idUsuario) {
-    if (['get', 'delete'].includes(config.method?.toLowerCase())) {
-      config.params = { profesor_id: idUsuario, ...config.params };
-    }
   }
 
   if (config.data && ['post', 'put', 'patch'].includes(config.method?.toLowerCase())) {

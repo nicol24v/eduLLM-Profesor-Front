@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import partidaService from '../../../services/partidaService';
-import useAuthStore from '../../../stores/authStore';
 
 export function usePartidas(params = {}) {
   return useQuery({
@@ -28,10 +27,7 @@ export function usePartidaResultados(id) {
 export function useCreatePartida() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (prueba_id) => {
-      const profesor_id = useAuthStore.getState().user?.idUsuario;
-      return partidaService.create({ profesor_id, prueba_id });
-    },
+    mutationFn: (prueba_id) => partidaService.create({ prueba_id }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['partidas'] }),
   });
 }
