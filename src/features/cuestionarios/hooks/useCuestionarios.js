@@ -9,12 +9,20 @@ export function useCuestionarios(params = {}) {
     queryFn: () => cuestionarioService.getAll(params),
   });
 
+  const update = useMutation({
+    mutationFn: ({ id, data }) => cuestionarioService.update(id, data),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['cuestionarios'] });
+      qc.invalidateQueries({ queryKey: ['cuestionario', variables.id] });
+    },
+  });
+
   const remove = useMutation({
     mutationFn: (id) => cuestionarioService.remove(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cuestionarios'] }),
   });
 
-  return { list, remove };
+  return { list, update, remove };
 }
 
 export function useCuestionario(id) {

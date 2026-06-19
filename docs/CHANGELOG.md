@@ -26,6 +26,14 @@ Bitácora cronológica de cambios significativos del frontend del módulo Profes
 
 ---
 
+## [1.1.1] - 2026-06-18
+
+### Corregido
+- **Caché de React Query no invalidada tras actualizar cuestionario:** Al editar un cuestionario desde `CuestionarioEditorPage`, el PUT se enviaba correctamente pero la UI seguía mostrando datos anteriores por `staleTime: 30s`. Se agregó `queryClient.invalidateQueries` para las claves `['cuestionarios']` y `['cuestionario', id]` después del update exitoso.
+- **`useCuestionarios.js`:** Se añadió mutación `update` con invalidación automática de caché para reuso futuro.
+
+---
+
 ## [1.0.0] - 2026-06-11
 
 ### Añadido

@@ -52,7 +52,7 @@ const Sidebar = () => {
       </List>
 
       <div className="px-4 py-4 border-t border-slate-700/60">
-        <p className="text-xs text-slate-500">EduQuiz Profesor v1.0</p>
+        <p className="text-xs text-slate-500">EduQuiz Profesor</p>
       </div>
     </div>
   );

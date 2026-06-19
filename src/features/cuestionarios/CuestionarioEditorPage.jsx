@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import { ArrowBack, Save, Add, Delete } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCuestionario } from './hooks/useCuestionarios';
 import cuestionarioService from '../../services/cuestionarioService';
 import materiaService from '../../services/materiaService';
@@ -177,6 +178,7 @@ function CuestionarioEditorPage() {
   const isEdit = !!id;
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const queryClient = useQueryClient();
 
   const { data: existing, isLoading: loadingExisting } = useCuestionario(id ? Number(id) : null);
 
@@ -290,6 +292,8 @@ function CuestionarioEditorPage() {
     try {
       if (isEdit) {
         await cuestionarioService.update(Number(id), payload);
+        queryClient.invalidateQueries({ queryKey: ['cuestionarios'] });
+        queryClient.invalidateQueries({ queryKey: ['cuestionario', Number(id)] });
         enqueueSnackbar('Cuestionario actualizado', { variant: 'success' });
       } else {
         await cuestionarioService.create(payload);
@@ -353,7 +357,7 @@ function CuestionarioEditorPage() {
               required
             />
             <TextField
-              label="Descripción (opcional)"
+              label="Descripción"
               fullWidth
               size="small"
               value={descripcion}
