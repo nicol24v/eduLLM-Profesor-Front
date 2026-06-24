@@ -34,25 +34,35 @@ const useGameStore = create((set, get) => ({
   }),
 
   initGame: ({ partidaId, codigoAcceso, titulo, totalPreguntas }) =>
-    set({ partidaId, codigoAcceso, titulo, totalPreguntas, gameStatus: 'SHOW_ROOM' }),
+    set({
+      partidaId, codigoAcceso, titulo, totalPreguntas,
+      gameStatus: 'SHOW_ROOM', players: [], playerCount: 0,
+      currentQuestion: null, currentQuestionIndex: -1,
+      leaderboard: [], results: [], answerCount: 0,
+    }),
 
   setGameStatus: (gameStatus) => set({ gameStatus }),
 
-  addPlayer: ({ nickname, socket_id }) => {
+  addPlayer: ({ playerId, nickname }) => {
     const players = get().players;
-    const exists = players.find((p) => p.socket_id === socket_id);
+    const exists = players.find((p) => p.playerId === playerId);
     if (!exists) {
       set((s) => ({
-        players: [...s.players, { socket_id, nickname }],
+        players: [...s.players, { playerId, nickname }],
         playerCount: s.playerCount + 1,
       }));
     }
   },
 
+  setPlayers: (players) => set({
+    players,
+    playerCount: players.length,
+  }),
+
   setCurrentQuestion: (question) =>
     set({
       currentQuestion: question,
-      currentQuestionIndex: question.numero - 1,
+      currentQuestionIndex: question.index,
       totalPreguntas: question.total,
       gameStatus: 'SHOW_QUESTION',
       answerCount: 0,
