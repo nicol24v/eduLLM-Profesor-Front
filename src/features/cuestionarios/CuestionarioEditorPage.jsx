@@ -189,7 +189,7 @@ function CuestionarioEditorPage() {
 
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [profesorMateriaId, setProfesorMateriaId] = useState('');
+  const [materiaId, setMateriaId] = useState('');
   const [preguntas, setPreguntas] = useState([newPregunta()]);
   const [saving, setSaving] = useState(false);
 
@@ -214,7 +214,7 @@ function CuestionarioEditorPage() {
     if (existing) {
       setTitulo(existing.titulo || '');
       setDescripcion(existing.descripcion || '');
-      setProfesorMateriaId(existing.profesor_materia_id?.toString() || '');
+      setMateriaId(existing.tbl_t_profesor_materia?.tbl_m_materia?.id_materia?.toString() || '');
       if (existing.tbl_t_pregunta?.length) {
         setPreguntas(
           existing.tbl_t_pregunta.map((p) => ({
@@ -248,7 +248,7 @@ function CuestionarioEditorPage() {
 
   const validate = () => {
     if (!titulo.trim()) return 'El título es obligatorio.';
-    if (!profesorMateriaId) return 'Selecciona una materia.';
+    if (!materiaId) return 'Selecciona una materia.';
     if (preguntas.length === 0) return 'Agrega al menos una pregunta.';
     for (let i = 0; i < preguntas.length; i++) {
       const p = preguntas[i];
@@ -269,7 +269,7 @@ function CuestionarioEditorPage() {
     const payload = {
       titulo: titulo.trim(),
       descripcion: descripcion.trim() || undefined,
-      profesor_materia_id: Number(profesorMateriaId),
+      materia_id: Number(materiaId),
       preguntas: preguntas.map((p) => ({
         ...(p.id_pregunta ? { id_pregunta: p.id_pregunta } : {}),
         texto: p.texto.trim(),
@@ -371,14 +371,14 @@ function CuestionarioEditorPage() {
                 label="Materia"
                 fullWidth
                 size="small"
-                value={profesorMateriaId}
-                onChange={(e) => setProfesorMateriaId(e.target.value)}
+                value={materiaId}
+                onChange={(e) => setMateriaId(e.target.value)}
                 required
                 SelectProps={{ native: true }}
               >
                 <option value="">-- Selecciona una materia --</option>
                 {materiasList.map((m) => (
-                  <option key={m.id_profesor_materia} value={m.id_profesor_materia}>
+                  <option key={m.id_profesor_materia} value={m.materia?.id_materia}>
                     {m.materia?.nombre || `Materia ${m.id_profesor_materia}`}
                   </option>
                 ))}

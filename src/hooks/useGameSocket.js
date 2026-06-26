@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { io } from 'socket.io-client';
 import useGameStore from '../stores/gameStore';
+import useAuthStore from '../stores/authStore';
 
 const GATEWAY = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:8085';
 
@@ -27,7 +28,7 @@ export const useGameSocket = () => {
       return;
     }
 
-    const token = localStorage.getItem('jwtToken');
+    const token = useAuthStore.getState().user?.token;
     const s = io(GATEWAY, {
       path: '/game/socket.io',
       query: { role: 'manager' },
