@@ -24,6 +24,9 @@ const partidaService = {
 
   getResultados: (id) =>
     api.get(`/partidas/${id}/resultados`).then((r) => r.data.data),
+
+  getByCodigo: (codigo) =>
+    api.get(`/partidas/codigo/${codigo}`).then((r) => r.data.data),
 };
 
 export default partidaService;

@@ -8,6 +8,13 @@ import { useSnackbar } from 'notistack';
 import useGameStore from '../../stores/gameStore';
 import partidaService from '../../services/partidaService';
 
+/* ─── HTML entity decoder ─── */
+function decodeHtmlEntities(text) {
+  const textarea = document.createElement('textarea')
+  textarea.innerHTML = text
+  return textarea.value
+}
+
 /* ─── Timer hook ─── */
 function useCountdown(seconds, active) {
   const [remaining, setRemaining] = useState(seconds);
@@ -191,7 +198,7 @@ function JuegoPage() {
         <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full">
           <div className="bg-white/10 backdrop-blur rounded-2xl p-6 mb-6 border border-white/20 text-center">
             {q?.image_url && (
-              <img src={q.image_url} alt="pregunta" className="max-h-40 mx-auto mb-4 rounded-lg object-contain" />
+              <img src={decodeHtmlEntities(q.image_url)} alt="pregunta" referrerPolicy="no-referrer" className="max-h-40 mx-auto mb-4 rounded-lg object-contain" />
             )}
             <p className="text-white text-xl font-bold leading-snug">{q?.texto}</p>
             {!answersOpen && (

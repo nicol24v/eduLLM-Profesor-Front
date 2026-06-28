@@ -6,6 +6,7 @@ import { useSnackbar } from 'notistack';
 import useGameStore from '../../stores/gameStore';
 import { useGameSocket } from '../../hooks/useGameSocket';
 import { useIniciarPartida } from './hooks/usePartidas';
+import partidaService from '../../services/partidaService';
 
 function SalaEsperaPage() {
   const { codigoAcceso } = useParams();
@@ -14,17 +15,44 @@ function SalaEsperaPage() {
   const { connect } = useGameSocket();
   const iniciarPartida = useIniciarPartida();
 
-  const { titulo, totalPreguntas, players, playerCount, gameStatus, partidaId } = useGameStore();
+  const { titulo, totalPreguntas, players, playerCount, gameStatus, partidaId, initGame, setGameStatus } = useGameStore();
   const [starting, setStarting] = useState(false);
+  const [loading, setLoading] = useState(!partidaId);
 
-  // Conectar socket al montar; si no hay partidaId (recarga de página), volver a cuestionarios
+  // Si el store está vacío (recarga de página), buscar partida por código
   useEffect(() => {
     if (partidaId) {
-      connect(partidaId);
-    } else {
-      navigate('/cuestionarios', { replace: true });
+      setLoading(false);
+      return;
     }
-  }, [partidaId, connect, navigate]);
+
+    let cancelled = false;
+
+    partidaService.getByCodigo(codigoAcceso)
+      .then((data) => {
+        if (cancelled) return;
+        initGame({
+          partidaId: data.id_partida,
+          codigoAcceso: data.codigo_acceso,
+          titulo: data.titulo_prueba || '',
+          totalPreguntas: data.total_preguntas || 0,
+        });
+        setLoading(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        enqueueSnackbar('No se encontró la partida', { variant: 'error' });
+        navigate('/cuestionarios', { replace: true });
+      });
+
+    return () => { cancelled = true; };
+  }, [codigoAcceso, partidaId, initGame, navigate, enqueueSnackbar]);
+
+  // Conectar socket cuando tengamos partidaId
+  useEffect(() => {
+    if (!partidaId) return;
+    connect(codigoAcceso);
+  }, [partidaId, codigoAcceso, connect]);
 
   // Navegar al juego cuando el socket confirme que la partida inició
   useEffect(() => {
@@ -41,7 +69,8 @@ function SalaEsperaPage() {
     setStarting(true);
     try {
       await iniciarPartida.mutateAsync(partidaId);
-      // La navegación ocurre al recibir 'partida:iniciada' por socket → gameStatus SHOW_START
+      setGameStatus('SHOW_START');
+      navigate(`/juego/${codigoAcceso}`, { replace: true });
     } catch (err) {
       enqueueSnackbar(err.message || 'Error al iniciar la partida', { variant: 'error' });
       setStarting(false);
@@ -49,6 +78,17 @@ function SalaEsperaPage() {
   };
 
   const colors = ['#2563eb', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0891b2'];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-2 border-slate-600 border-t-blue-400 rounded-full animate-spin" />
+          <p className="text-slate-400 text-sm">Cargando sala de espera...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex flex-col items-center justify-start pt-12 px-4">
@@ -82,7 +122,7 @@ function SalaEsperaPage() {
         <div className="w-full max-w-lg mb-8">
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
             {players.map((p, idx) => (
-              <div key={p.socket_id || idx} className="flex flex-col items-center gap-1.5 bg-white/10 rounded-xl py-3 px-2 border border-white/10">
+              <div key={p.playerId || idx} className="flex flex-col items-center gap-1.5 bg-white/10 rounded-xl py-3 px-2 border border-white/10">
                 <Avatar
                   sx={{
                     width: 36, height: 36,

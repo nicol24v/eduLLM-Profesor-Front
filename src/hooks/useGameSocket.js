@@ -1,42 +1,64 @@
 import { useCallback } from 'react';
 import { io } from 'socket.io-client';
 import useGameStore from '../stores/gameStore';
+import useAuthStore from '../stores/authStore';
 
 const GATEWAY = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:8085';
 
-// Singleton a nivel de módulo: sobrevive unmount/mount entre SalaEsperaPage y JuegoPage.
 let globalSocket = null;
 
 export const useGameSocket = () => {
   const {
-    setSocket, addPlayer, setGameStatus,
+    setSocket, addPlayer, setPlayers, setGameStatus,
     setCurrentQuestion, setFinished, incrementAnswerCount, resetGame,
   } = useGameStore();
 
-  const connect = useCallback((partida_id) => {
-    if (globalSocket?.connected) return;
+  const connect = useCallback((codigoAcceso) => {
+    if (globalSocket?.connected) {
+      globalSocket.emit('manager:rejoin', { codigoAcceso }, (ack) => {
+        if (ack?.ok && ack.data?.players) {
+          setPlayers(
+            ack.data.players.map((p) => ({
+              playerId: p.playerId,
+              nickname: p.nickname,
+            })),
+          );
+        }
+      });
+      return;
+    }
 
-    const token = localStorage.getItem('jwtToken');
+    const token = useAuthStore.getState().user?.token;
     const s = io(GATEWAY, {
-      query: { role: 'teacher' },
+      path: '/game/socket.io',
+      query: { role: 'manager' },
       auth: { token },
       withCredentials: true,
       transports: ['websocket', 'polling'],
     });
 
     s.on('connect', () => {
-      s.emit('teacher:join', { partida_id });
+      s.emit('manager:rejoin', { codigoAcceso }, (ack) => {
+        if (ack?.ok && ack.data?.players) {
+          setPlayers(
+            ack.data.players.map((p) => ({
+              playerId: p.playerId,
+              nickname: p.nickname,
+            })),
+          );
+        }
+      });
     });
 
-    s.on('student:joined', (data) => addPlayer(data));
-    s.on('partida:iniciada', () => setGameStatus('SHOW_START'));
-    s.on('partida:pregunta', (data) => setCurrentQuestion(data));
-    s.on('partida:finalizada', () => setFinished());
-    s.on('respuesta:recibida', () => incrementAnswerCount());
+    s.on('game:player_joined', (data) => addPlayer(data));
+    s.on('game:started', () => setGameStatus('SHOW_START'));
+    s.on('game:question_manager', (data) => setCurrentQuestion(data));
+    s.on('game:finished', () => setFinished());
+    s.on('game:open_answers', () => incrementAnswerCount());
 
     globalSocket = s;
     setSocket(s);
-  }, [addPlayer, setGameStatus, setCurrentQuestion, setFinished, incrementAnswerCount, setSocket]);
+  }, [addPlayer, setPlayers, setGameStatus, setCurrentQuestion, setFinished, incrementAnswerCount, setSocket]);
 
   const disconnect = useCallback(() => {
     globalSocket?.disconnect();
