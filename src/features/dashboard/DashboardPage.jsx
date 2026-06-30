@@ -4,6 +4,7 @@ import { Box, Grid, Card, CardContent, Typography, Skeleton, Chip, Button } from
 import { People, Quiz, School, PlayCircle, ArrowForward } from '@mui/icons-material';
 import { useDashboard } from './hooks/useDashboard';
 import useGameStore from '../../stores/gameStore';
+import AnalyticaSection from './AnalyticaSection';
 
 const statCards = [
   { key: 'total_estudiantes',  label: 'Estudiantes',       icon: <People />,      color: '#2563eb', bg: '#eff6ff' },
@@ -150,6 +151,8 @@ function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      <AnalyticaSection />
     </div>
   );
 }
