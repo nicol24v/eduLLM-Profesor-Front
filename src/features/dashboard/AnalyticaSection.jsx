@@ -3,6 +3,8 @@ import { Skeleton } from '@mui/material';
 import { useAnalitica } from './hooks/useAnalitica';
 import EvolucionGrupalChart from './EvolucionGrupalChart';
 import RankingLoeiChart from './RankingLoeiChart';
+import HeatmapChart from './HeatmapChart';
+import DebilidadesChart from './DebilidadesChart';
 
 const LOEI_LEGEND = [
   { nivel: 'SAR', label: 'Supera (9–10)', color: '#16a34a' },
@@ -38,7 +40,15 @@ export default function AnalyticaSection() {
 
   const evolucion = data?.evolucion ?? [];
   const ranking = data?.ranking ?? [];
-  const isEmpty = !isLoading && !isError && evolucion.length === 0 && ranking.length === 0;
+  const heatmap = data?.heatmap ?? { quizzes: [], filas: [] };
+  const debilidades = data?.debilidades ?? [];
+  const enRiesgo = ranking.filter((r) => r.nota_promedio < 7);
+
+  const isEmpty =
+    !isLoading &&
+    !isError &&
+    evolucion.length === 0 &&
+    ranking.length === 0;
 
   return (
     <div className="mt-8">
@@ -63,6 +73,7 @@ export default function AnalyticaSection() {
 
       {!isEmpty && (
         <>
+          {/* Leyenda LOEI */}
           <div className="flex flex-wrap gap-3 mb-5">
             {LOEI_LEGEND.map((l) => (
               <div key={l.nivel} className="flex items-center gap-1.5">
@@ -75,7 +86,8 @@ export default function AnalyticaSection() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Módulo 1: Evolución + Ranking */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
             <ChartCard
               title="Evolución del grupo"
               subtitle="Promedio LOEI por partida finalizada"
@@ -92,6 +104,63 @@ export default function AnalyticaSection() {
               {isLoading ? <ChartSkeleton /> : <RankingLoeiChart data={ranking} />}
             </ChartCard>
           </div>
+
+          {/* Módulo 2+3: Heatmap de desempeño + Estudiantes en riesgo */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+            <ChartCard
+              title="Participación y desempeño"
+              subtitle="Nota LOEI por estudiante y cuestionario — gris = no participó"
+              gradient="from-violet-500 to-purple-600"
+            >
+              {isLoading ? <ChartSkeleton /> : <HeatmapChart data={heatmap} />}
+            </ChartCard>
+
+            <ChartCard
+              title="Estudiantes en riesgo"
+              subtitle={
+                isLoading
+                  ? '...'
+                  : enRiesgo.length === 0
+                  ? 'Todos los estudiantes aprobaron'
+                  : `${enRiesgo.length} estudiante${enRiesgo.length > 1 ? 's' : ''} con promedio inferior a 7.00`
+              }
+              gradient="from-red-500 to-rose-600"
+            >
+              {isLoading ? (
+                <ChartSkeleton />
+              ) : enRiesgo.length === 0 ? (
+                <div className="flex items-center justify-center h-[120px]">
+                  <div className="text-center">
+                    <div className="text-3xl mb-2">✓</div>
+                    <p className="text-sm text-emerald-600 font-medium">
+                      Ningún estudiante en riesgo
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {enRiesgo.map((e, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-1.5 bg-red-50 border border-red-100 rounded-lg px-3 py-1.5"
+                    >
+                      <span className="text-xs font-medium text-red-700">{e.nombre}</span>
+                      <span className="text-xs text-red-400">{e.nota_promedio.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ChartCard>
+          </div>
+
+          {/* Módulo 4: Debilidades por pregunta */}
+          <ChartCard
+            title="Preguntas con mayor dificultad"
+            subtitle="Tasa de error por pregunta — rojo > 70%, amarillo > 50%"
+            gradient="from-orange-500 to-amber-500"
+          >
+            {isLoading ? <ChartSkeleton /> : <DebilidadesChart data={debilidades} />}
+          </ChartCard>
         </>
       )}
     </div>
